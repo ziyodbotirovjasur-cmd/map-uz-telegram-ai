@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const http = require('http');
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
@@ -19,6 +21,28 @@ const TELEGRAM_API =
 const OPENROUTER_API =
   'https://openrouter.ai/api/v1/chat/completions';
 
+
+/*
+========================================
+RENDER HTTP SERVER
+========================================
+*/
+
+const PORT = process.env.PORT || 10000;
+
+const healthServer = http.createServer((req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8'
+  });
+
+  res.end('MAP UZ Telegram AI Assistant OK');
+});
+
+healthServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`HTTP server: ${PORT}`);
+});
+
+
 /*
 ========================================
 TELEGRAM API
@@ -30,9 +54,11 @@ async function telegram(method, body = {}) {
     `${TELEGRAM_API}/${method}`,
     {
       method: 'POST',
+
       headers: {
         'Content-Type': 'application/json'
       },
+
       body: JSON.stringify(body)
     }
   );
@@ -46,6 +72,7 @@ async function telegram(method, body = {}) {
   return data.result;
 }
 
+
 /*
 ========================================
 MIJOZLAR XOTIRASI
@@ -58,6 +85,7 @@ const conversations = new Map();
 // Har bir mijoz uchun maksimal saqlanadigan xabarlar
 const MAX_HISTORY = 16;
 
+
 function getConversation(chatId) {
   if (!conversations.has(chatId)) {
     conversations.set(chatId, []);
@@ -65,6 +93,7 @@ function getConversation(chatId) {
 
   return conversations.get(chatId);
 }
+
 
 function addMessage(chatId, role, content) {
   const history = getConversation(chatId);
@@ -79,6 +108,7 @@ function addMessage(chatId, role, content) {
     history.shift();
   }
 }
+
 
 /*
 ========================================
@@ -100,6 +130,7 @@ MUHIM:
 Sen oddiy savol-javob bot emassan.
 Sen suhbatning oldingi qismini tushunishing kerak.
 
+
 ========================================
 MAP UZ XIZMATI
 ========================================
@@ -118,6 +149,7 @@ Paket tarkibi:
 🔳 QR kod
 📋 Biznes ma'lumotlarini professional tayyorlash
 
+
 ========================================
 MIJOZDAN KERAK BO‘LADIGAN MA'LUMOTLAR
 ========================================
@@ -134,11 +166,13 @@ MIJOZDAN KERAK BO‘LADIGAN MA'LUMOTLAR
 10. Ichki ko‘rinish rasmlari — 3–5 ta
 11. Biznes haqida qisqacha ma'lumot
 
+
 ========================================
 ALOQA
 ========================================
 
 +998 99 190 11 10
+
 
 ========================================
 ENG MUHIM QOIDA — UYDIRMA
@@ -154,9 +188,11 @@ Agar ma'lumot MAP UZ haqida yuqoridagi ma'lumotlarda mavjud bo‘lmasa:
 - Google/Yandex/2GIS algoritmlari haqida tasdiqlanmagan va'da berma
 
 Bunday holatda mijozga:
+
 "Bu ma'lumotni aniq tekshirib berish uchun +998 99 190 11 10 raqamiga murojaat qilishingiz mumkin."
 
 deb aytishing mumkin.
+
 
 ========================================
 SUHBATNI TUSHUNISH
@@ -191,6 +227,7 @@ Mijoz:
 Sen:
 "Zo‘r 👍 Unda boshlaymiz. Avval biznesingiz nomini yuboring."
 
+
 ========================================
 MIJOZ "NARXI QANCHA?" DESA
 ========================================
@@ -201,11 +238,13 @@ Javob:
 
 Keyin paket tarkibini qisqa tushuntir.
 
+
 ========================================
 MIJOZ "NIMA XIZMAT BOR?" DESA
 ========================================
 
 Paket tarkibini tushuntir.
+
 
 ========================================
 MIJOZ "BOSHLAYMIZ" DESA
@@ -222,6 +261,7 @@ Mijoz:
 
 Keyin boshqa ma'lumotlarni so‘ra.
 
+
 ========================================
 MA'LUMOT YIG‘ISH
 ========================================
@@ -231,6 +271,7 @@ Mijoz "qanday ma'lumotlar kerak?" desa, barcha kerakli ma'lumotlarni tartibli qi
 Lekin oddiy suhbatda mijozni 11 ta savol bilan birdan bosib tashlama.
 
 Tabiiy suhbat olib bor.
+
 
 ========================================
 IMLO XATOLARI
@@ -248,11 +289,13 @@ Masalan:
 
 Bularni ma'nosi bo‘yicha tushun.
 
+
 ========================================
 EMOJI
 ========================================
 
 👍 ❤️ 🔥 😊 😍 kabi emoji yuborilsa, oldingi suhbatga qarab ma'nosini tushun.
+
 
 ========================================
 TIL
@@ -265,6 +308,7 @@ Mijoz rus tilida yozsa, rus tilida javob ber.
 Mijoz ingliz tilida yozsa, ingliz tilida javob ber.
 
 Mijoz qaysi tilda gaplashayotgan bo‘lsa, shu tilga moslash.
+
 
 ========================================
 JAVOB USLUBI
@@ -285,6 +329,7 @@ Javoblarda Markdown ishlatma.
 
 "**" kabi belgilarni ishlatma.
 
+
 ========================================
 ENG MUHIM
 ========================================
@@ -302,36 +347,43 @@ Agar mijoz xizmatga qiziqsa — savdoni davom ettir.
 Agar oddiy savol bersa — oddiy javob ber.
 
 Agar MAP UZ haqida noma'lum savol bersa — uydirma.
-
-========================================
 `;
+
 
   const messages = [
     {
       role: 'system',
       content: systemPrompt
     },
+
     ...history,
+
     {
       role: 'user',
       content: customerMessage
     }
   ];
 
+
   const response = await fetch(
     OPENROUTER_API,
     {
       method: 'POST',
+
       headers: {
         'Authorization':
           `Bearer ${OPENROUTER_API_KEY}`,
+
         'Content-Type':
           'application/json',
+
         'HTTP-Referer':
           'https://mapuz.uz',
+
         'X-Title':
           'MAP UZ Telegram AI Assistant'
       },
+
       body: JSON.stringify({
         model: 'openrouter/free',
         messages
@@ -339,14 +391,18 @@ Agar MAP UZ haqida noma'lum savol bersa — uydirma.
     }
   );
 
+
   const data = await response.json();
+
 
   if (!response.ok) {
     throw new Error(JSON.stringify(data));
   }
 
+
   const reply =
     data.choices?.[0]?.message?.content;
+
 
   if (!reply) {
     throw new Error(
@@ -354,8 +410,10 @@ Agar MAP UZ haqida noma'lum savol bersa — uydirma.
     );
   }
 
+
   return reply.trim();
 }
+
 
 /*
 ========================================
@@ -368,6 +426,7 @@ async function sendBusinessMessage(
   chatId,
   text
 ) {
+
   return telegram(
     'sendMessage',
     {
@@ -382,6 +441,7 @@ async function sendBusinessMessage(
   );
 }
 
+
 /*
 ========================================
 TELEGRAM UPDATE
@@ -390,37 +450,48 @@ TELEGRAM UPDATE
 
 let offset = 0;
 
+
 async function start() {
 
   console.log('');
   console.log(
     '================================'
   );
+
   console.log(
     'MAP UZ TELEGRAM AI ASSISTANT'
   );
+
   console.log(
     '================================'
   );
+
   console.log(
     'Telegram: OK'
   );
+
   console.log(
     'OpenRouter Free AI: OK'
   );
+
   console.log(
     'Jev AI: BYPASS'
   );
+
   console.log(
     'Suhbat xotirasi: ON'
   );
+
   console.log(
     'CRM: O‘ZGARTIRILMAYDI'
   );
+
   console.log(
     '================================'
   );
+
   console.log('');
+
 
   while (true) {
 
@@ -443,53 +514,67 @@ async function start() {
           }
         );
 
+
       for (const update of updates) {
 
         offset =
           update.update_id + 1;
 
+
         if (!update.business_message) {
           continue;
         }
 
+
         const message =
           update.business_message;
 
+
         const text =
           message.text || '';
+
 
         if (!text.trim()) {
           continue;
         }
 
+
         const businessConnectionId =
           message.business_connection_id;
+
 
         const chatId =
           message.chat.id;
 
+
         console.log('');
+
         console.log(
           '=============================='
         );
+
 
         console.log(
           'MIJOZ:',
           text
         );
 
+
         console.log(
           'AI: javob tayyorlanmoqda...'
         );
 
+
         /*
         Mijoz xabarini xotiraga qo‘shamiz
         */
+
         addMessage(
           chatId,
           'user',
           text
         );
+
 
         const reply =
           await generateReply(
@@ -497,19 +582,23 @@ async function start() {
             text
           );
 
+
         /*
         Bot javobini ham xotiraga qo‘shamiz
         */
+
         addMessage(
           chatId,
           'assistant',
           reply
         );
 
+
         console.log(
           'BOT:',
           reply
         );
+
 
         await sendBusinessMessage(
           businessConnectionId,
@@ -517,14 +606,17 @@ async function start() {
           reply
         );
 
+
         console.log(
           'Yuborildi ✅'
         );
+
 
         console.log(
           '=============================='
         );
       }
+
 
     } catch (error) {
 
@@ -532,6 +624,7 @@ async function start() {
         'XATOLIK:',
         error.message
       );
+
 
       await new Promise(
         resolve =>
@@ -543,5 +636,12 @@ async function start() {
     }
   }
 }
+
+
+/*
+========================================
+START
+========================================
+*/
 
 start();
